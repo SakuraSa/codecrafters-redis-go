@@ -7,5 +7,5 @@
 # DON'T EDIT THIS!
 set -e
 tmpFile=$(mktemp)
-go build -o "$tmpFile" app/*.go
+go build -o "$tmpFile" src/cmd/*.go
 exec "$tmpFile" "$@"
