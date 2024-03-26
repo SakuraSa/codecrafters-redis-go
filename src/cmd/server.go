@@ -5,7 +5,8 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/codecrafters-io/redis-starter-go/src/router"
+	"github.com/codecrafters-io/redis-starter-go/src/handler"
+	"github.com/codecrafters-io/redis-starter-go/src/server"
 )
 
 func main() {
@@ -17,7 +18,9 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	server := router.NewTCPServer(*addressFlag, *portFlag)
+	server := server.NewTCPServer(*addressFlag, *portFlag)
+	server.SetHandler(handler.NewCommandHandler())
+
 	if err := server.Loop(ctx); err != nil {
 		panic(fmt.Errorf("failed to start server: %v", err))
 	}
