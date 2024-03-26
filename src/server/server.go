@@ -32,6 +32,7 @@ func (s *TCPServer) Loop(ctx context.Context) error {
 	}
 	defer listener.Close()
 
+	// loop to accept connections
 	for {
 		if connection, err := listener.Accept(); err != nil {
 			return fmt.Errorf("error accepting connection: %v", err)
