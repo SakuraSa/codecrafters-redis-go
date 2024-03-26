@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"net"
-	"strings"
 )
 
 var (
@@ -28,7 +27,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 		return fmt.Errorf("error reading from connection: %v", err)
 	}
 
-	if cmd := strings.Trim(string(buff[:size]), "\r\n\f\t\b "); cmd == "PING" {
+	if cmd := string(buff[:size]); cmd == "*1\r\n$4\r\nping\r\n" {
 		if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
 			return fmt.Errorf("error writing to connection: %v", err)
 		}
