@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
+	"strconv"
+	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/src/model"
 	"github.com/codecrafters-io/redis-starter-go/src/scan"
 )
 
@@ -16,12 +20,14 @@ var (
 )
 
 type CommandHandler struct {
-	Mem map[string][]byte
+	Storage model.RedisStorage
 }
 
 func NewCommandHandler() *CommandHandler {
 	return &CommandHandler{
-		Mem: make(map[string][]byte),
+		Storage: model.RedisStorage{
+			Mem: make(map[string]*model.RedisBucket),
+		},
 	}
 }
 
@@ -52,16 +58,43 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		case "set":
-			if len(cmdAndArgs.Args) != 3 {
+			if len(cmdAndArgs.Args) == 3 {
+				h.Storage.Mem[string(cmdAndArgs.Args[1])] = &model.RedisBucket{
+					Value:    cmdAndArgs.Args[2],
+					ExpireAt: math.MaxInt64,
+				}
+				if err := h.writeSimpleStringResp(conn, "OK"); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+			} else if len(cmdAndArgs.Args) == 5 {
+				if string(cmdAndArgs.Args[3]) == "px" {
+					if expireAfter, err := strconv.ParseInt(string(cmdAndArgs.Args[4]), 10, 64); err == nil {
+						h.Storage.Mem[string(cmdAndArgs.Args[1])] = &model.RedisBucket{
+							Value:    cmdAndArgs.Args[2],
+							ExpireAt: time.Now().UnixMilli() + expireAfter,
+						}
+						if err := h.writeSimpleStringResp(conn, "OK"); err != nil {
+							return fmt.Errorf("error writing response: %v", err)
+						}
+					} else {
+						if err := h.writeErrorResp(conn, fmt.Sprintf("set command 5-th arg invaild, %v\r\n", cmdAndArgs)); err != nil {
+							return fmt.Errorf("error writing response: %v", err)
+						}
+						continue
+					}
+				} else {
+					if err := h.writeErrorResp(conn, fmt.Sprintf("set command 4-th arg invaild, %v\r\n", cmdAndArgs)); err != nil {
+						return fmt.Errorf("error writing response: %v", err)
+					}
+					continue
+				}
+			} else {
 				if err := h.writeErrorResp(conn, fmt.Sprintf("set requires 3 argument, %v\r\n", cmdAndArgs)); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 				continue
 			}
-			h.Mem[string(cmdAndArgs.Args[1])] = cmdAndArgs.Args[2]
-			if err := h.writeSimpleStringResp(conn, "OK"); err != nil {
-				return fmt.Errorf("error writing response: %v", err)
-			}
+
 		case "get":
 			if len(cmdAndArgs.Args) != 2 {
 				if err := h.writeErrorResp(conn, fmt.Sprintf("get requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
@@ -69,11 +102,12 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				}
 				continue
 			}
-			if val, ok := h.Mem[string(cmdAndArgs.Args[1])]; ok {
-				if err := h.writeBytesResp(conn, val); err != nil {
+			if val, ok := h.Storage.Mem[string(cmdAndArgs.Args[1])]; ok && val.ExpireAt > time.Now().UnixMilli() {
+				if err := h.writeBytesResp(conn, val.Value); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 			} else {
+				delete(h.Storage.Mem, string(cmdAndArgs.Args[1]))
 				if err := h.writeNilResp(conn); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
