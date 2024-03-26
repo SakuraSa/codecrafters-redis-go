@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 )
@@ -18,22 +19,34 @@ func NewCommandHandler() *CommandHandler {
 
 func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 	var (
-		buff = make([]byte, 1024)
-		size int
-		err  error
+		scanner = bufio.NewScanner(conn)
 	)
 
-	if size, err = conn.Read(buff); err != nil {
-		return fmt.Errorf("error reading from connection: %v", err)
+	// read redis protocol version
+	if ok := scanner.Scan(); !ok {
+		return fmt.Errorf("error reading from connection: %v", scanner.Err())
+	} else if version := scanner.Text(); version != "*1" {
+		return fmt.Errorf("invalid protocol version: \"%s\"", version)
 	}
 
-	if cmd := string(buff[:size]); cmd == "*1\r\n$4\r\nping\r\n" {
-		if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
-			return fmt.Errorf("error writing to connection: %v", err)
-		}
-	} else {
-		if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command \"%s\"\r\n", cmd))); err != nil {
-			return fmt.Errorf("error writing to connection: %v", err)
+	// read api version
+	if ok := scanner.Scan(); !ok {
+		return fmt.Errorf("error reading from connection: %v", scanner.Err())
+	} else if version := scanner.Text(); version != "$4" {
+		return fmt.Errorf("invalid protocol version: \"%s\"", version)
+	}
+
+	for scanner.Scan() {
+		cmd := scanner.Text()
+		if cmd == "ping" {
+			if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
+				return fmt.Errorf("error writing to connection: %v", err)
+			}
+		} else {
+			if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command \"%s\"\r\n", cmd))); err != nil {
+				return fmt.Errorf("error writing to connection: %v", err)
+			}
+			break
 		}
 	}
 
