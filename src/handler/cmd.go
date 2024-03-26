@@ -35,17 +35,17 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 
 		switch cmdAndArgs.Command() {
 		case "ping":
-			if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
+			if err := h.writeStringResp(conn, "PONG"); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		case "echo":
 			if len(cmdAndArgs.Args) != 2 {
-				if _, err := conn.Write([]byte(fmt.Sprintf("-ERR echo requires 2 argument, %v\r\n", cmdAndArgs))); err != nil {
+				if err := h.writeErrorResp(conn, fmt.Sprintf("echo requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 				continue
 			}
-			if _, err := conn.Write(cmdAndArgs.Args[1]); err != nil {
+			if err := h.writeBytesResp(conn, cmdAndArgs.Args[1]); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:
@@ -55,5 +55,35 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 		}
 	}
 
+	return nil
+}
+
+func (h *CommandHandler) writeBytesResp(conn net.Conn, resp []byte) error {
+	if _, err := conn.Write([]byte("$")); err != nil {
+		return err
+	} else if _, err = conn.Write([]byte(fmt.Sprint(len(resp)))); err != nil {
+		return err
+	} else if _, err = conn.Write([]byte("\r\n")); err != nil {
+		return err
+	} else if _, err = conn.Write(resp); err != nil {
+		return err
+	} else if _, err = conn.Write([]byte("\r\n")); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *CommandHandler) writeStringResp(conn net.Conn, resp string) error {
+	return h.writeBytesResp(conn, []byte(resp))
+}
+
+func (h *CommandHandler) writeErrorResp(conn net.Conn, msg string) error {
+	if _, err := conn.Write([]byte("-Error ")); err != nil {
+		return err
+	} else if _, err = conn.Write([]byte(msg)); err != nil {
+		return err
+	} else if _, err = conn.Write([]byte("\r\n")); err != nil {
+		return err
+	}
 	return nil
 }
