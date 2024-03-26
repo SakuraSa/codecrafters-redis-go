@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/codecrafters-io/redis-starter-go/src/handler"
 	"github.com/codecrafters-io/redis-starter-go/src/server"
@@ -18,6 +20,8 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
+	log.Default().SetOutput(os.Stdout)
+	log.Printf("Starting server on %s:%d\n", *addressFlag, *portFlag)
 	server := server.NewTCPServer(*addressFlag, *portFlag)
 	server.SetHandler(handler.NewCommandHandler())
 

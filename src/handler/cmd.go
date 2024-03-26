@@ -2,9 +2,13 @@ package handler
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net"
-	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/src/scan"
 )
 
 var (
@@ -20,51 +24,36 @@ func NewCommandHandler() *CommandHandler {
 
 func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 	var (
-		scanner = bufio.NewScanner(conn)
-		cmdSize int
-		cmdArr  []string
+		reader = scan.NewRedisCmdScanner(bufio.NewReader(conn))
 	)
 
-loop:
-	// read cmd arg size
-	if ok := scanner.Scan(); !ok {
-		return nil
-	} else if sizeStr := scanner.Text(); len(sizeStr) <= 1 || sizeStr[0] != '*' {
-		return fmt.Errorf("invalid command command size: \"%s\"", sizeStr)
-	} else if size, err := strconv.ParseInt(sizeStr[1:], 10, 64); err != nil {
-		return fmt.Errorf("invalid command command size: \"%s\"", sizeStr)
-	} else {
-		cmdSize = int(size)
-		cmdArr = make([]string, cmdSize)
-	}
+	for cmdAndArgs, err := reader.Scan(); err == nil; cmdAndArgs, err = reader.Scan() {
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		log.Printf("Received command: %v\n", cmdAndArgs)
 
-	for i := 0; i < cmdSize; i++ {
-		if ok := scanner.Scan(); !ok {
-			return fmt.Errorf("error reading %d-th command size, found EOF; cmds = %+v", i, cmdArr)
-		} else if sizeStr := scanner.Text(); len(sizeStr) <= 1 || sizeStr[0] != '$' {
-			return fmt.Errorf("invalid command size: \"%s\"", sizeStr)
-		} else if _, err := strconv.ParseInt(sizeStr[1:], 10, 64); err != nil {
-			return fmt.Errorf("invalid command size: \"%s\"", sizeStr)
-		} else if ok := scanner.Scan(); !ok {
-			return fmt.Errorf("error reading %d-th command, found EOF; cmds = %+v", i, cmdArr)
-		} else {
-			cmdArr[i] = scanner.Text()
+		switch cmdAndArgs.Command() {
+		case "ping":
+			if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
+				return fmt.Errorf("error writing response: %v", err)
+			}
+		case "echo":
+			if len(cmdAndArgs.Args) != 2 {
+				if _, err := conn.Write([]byte(fmt.Sprintf("-ERR echo requires 2 argument, %v\r\n", cmdAndArgs))); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+				continue
+			}
+			if _, err := conn.Write(cmdAndArgs.Args[1]); err != nil {
+				return fmt.Errorf("error writing response: %v", err)
+			}
+		default:
+			if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command, %v\r\n", cmdAndArgs))); err != nil {
+				return fmt.Errorf("error writing response: %v", err)
+			}
 		}
 	}
 
-	switch cmdArr[0] {
-	case "ping":
-		if _, err := conn.Write([]byte("+PONG\r\n")); err != nil {
-			return fmt.Errorf("error writing to connection: %v", err)
-		}
-		goto loop
-	default:
-		if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command %+v\r\n", cmdArr))); err != nil {
-			return fmt.Errorf("error writing to connection: %v", err)
-		}
-		goto errExit
-	}
-
-errExit:
 	return nil
 }

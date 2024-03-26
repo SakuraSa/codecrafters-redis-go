@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/codecrafters-io/redis-starter-go/src/handler"
@@ -51,7 +52,7 @@ func (s *TCPServer) Loop(ctx context.Context) error {
 func (s *TCPServer) HandleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("Recovered from panic: ", err)
+			log.Println("Recovered from panic: ", err)
 		}
 		_ = conn.Close()
 	}()
@@ -59,6 +60,6 @@ func (s *TCPServer) HandleConnection(ctx context.Context, conn net.Conn) {
 	if s.handler == nil {
 		return
 	} else if handlerErr := s.handler.HandleConnection(conn); handlerErr != nil {
-		fmt.Printf("Error handling connection: %v\n", handlerErr)
+		log.Printf("Error handling connection: %v\n", handlerErr)
 	}
 }
