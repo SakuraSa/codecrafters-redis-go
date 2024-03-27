@@ -1,18 +1,20 @@
 package model
 
-import "strings"
+import (
+	"encoding/json"
+)
 
 type RedisCommandAndArgs struct {
 	Args [][]byte
 }
 
 func (c RedisCommandAndArgs) String() string {
-	var builder strings.Builder
+	var arr []string
 	for _, arg := range c.Args {
-		builder.Write(arg)
-		builder.Write([]byte(" "))
+		arr = append(arr, string(arg))
 	}
-	return builder.String()
+	buf, _ := json.Marshal(arr)
+	return "CMD" + string(buf)
 }
 
 func (c RedisCommandAndArgs) Command() string {

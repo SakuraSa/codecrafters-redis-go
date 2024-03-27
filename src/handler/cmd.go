@@ -118,6 +118,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:
+			log.Printf("Error: unknown command, %v\n", cmdAndArgs)
 			if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command, %v\r\n", cmdAndArgs))); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
