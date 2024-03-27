@@ -132,7 +132,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				continue
 			}
 			log.Printf("Response info command: role:%v\n", h.Conf.Role)
-			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v\r\n", h.Conf.Role))); err != nil {
+			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%s\r\n", h.Conf.Role))); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:

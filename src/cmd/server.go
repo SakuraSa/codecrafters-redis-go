@@ -32,7 +32,7 @@ func main() {
 	redisHandler.Conf.ReplicaofAddress = *replicaofFlag
 	redisHandler.Conf.ReplicaofPort = replicaofPort
 	if len(redisHandler.Conf.ReplicaofAddress) > 0 && redisHandler.Conf.ReplicaofPort > 0 {
-		redisHandler.Conf.Role = "salve"
+		redisHandler.Conf.Role = "slave"
 	} else {
 		redisHandler.Conf.Role = "master"
 	}
