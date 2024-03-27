@@ -42,8 +42,6 @@ $3
 get
 $3
 exp
-*2
-$4
-info
-$11
-replication
+*1
+$16
+info replication

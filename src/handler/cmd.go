@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/src/model"
@@ -43,7 +44,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 		}
 		log.Printf("Received command: %v\n", cmdAndArgs)
 
-		switch cmdAndArgs.Command() {
+		switch strings.ToLower(cmdAndArgs.Command()) {
 		case "ping":
 			if err := h.writeSimpleStringResp(conn, "PONG"); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
@@ -112,19 +113,8 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 			}
-		case "info":
-			if len(cmdAndArgs.Args) != 2 {
-				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
-					return fmt.Errorf("error writing response: %v", err)
-				}
-				continue
-			} else if string(cmdAndArgs.Args[1]) != "replication" {
-				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
-					return fmt.Errorf("error writing response: %v", err)
-				}
-				continue
-			}
-			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v\r\n", h.Conf.Role))); err != nil {
+		case "info replication":
+			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v", h.Conf.Role))); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:

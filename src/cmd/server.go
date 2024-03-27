@@ -24,7 +24,9 @@ func main() {
 	log.Default().SetOutput(os.Stdout)
 	log.Printf("Starting server on %s:%d\n", *addressFlag, *portFlag)
 	server := server.NewTCPServer(*addressFlag, *portFlag)
-	server.SetHandler(handler.NewCommandHandler())
+	redisHandler := handler.NewCommandHandler()
+	redisHandler.Conf.Role = "master"
+	server.SetHandler(redisHandler)
 
 	if err := server.Loop(ctx); err != nil {
 		panic(fmt.Errorf("failed to start server: %v", err))
