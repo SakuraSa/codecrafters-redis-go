@@ -30,7 +30,7 @@ func (c CommandConf) Visit(f func(name string, value interface{})) {
 
 	pairs = append(pairs, &pairType{"role", c.Role})
 	if c.Role == "master" {
-		pairs = append(pairs, &pairType{"master_repl_id", c.MasterReplid})
+		pairs = append(pairs, &pairType{"master_replid", c.MasterReplid})
 		pairs = append(pairs, &pairType{"master_repl_offset", c.MasterReplOffset})
 	}
 	sort.SliceStable(pairs, func(i, j int) bool {
