@@ -1,6 +1,9 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 type CommandConf struct {
 	Role string
@@ -17,17 +20,30 @@ func (c CommandConf) String() string {
 	return string(buf)
 }
 
+type pairType struct {
+	name  string
+	value interface{}
+}
+
 func (c CommandConf) Visit(f func(name string, value interface{}) error) error {
-	if err := f("role", c.Role); err != nil {
-		return err
-	}
+	var pairs []*pairType
+
+	pairs = append(pairs, &pairType{"role", c.Role})
 	if c.Role == "master" {
-		if err := f("master_repl_id", c.MasterReplid); err != nil {
-			return err
-		}
-		if err := f("master_repl_offset", c.MasterReplOffset); err != nil {
-			return err
-		}
+		pairs = append(pairs, &pairType{"master_repl_id", c.MasterReplid})
+		pairs = append(pairs, &pairType{"master_repl_offset", c.MasterReplOffset})
 	}
-	return nil
+	sort.SliceStable(pairs, func(i, j int) bool {
+		return pairs[i].name < pairs[j].name
+	})
+
+	var err error
+	for _, p := range pairs {
+		if err = f(p.name, p.value); err != nil {
+			break
+		}
+
+	}
+
+	return err
 }
