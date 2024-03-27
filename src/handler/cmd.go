@@ -46,6 +46,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 
 		switch strings.ToLower(cmdAndArgs.Command()) {
 		case "ping":
+			log.Printf("Response ping command: PONG\n")
 			if err := h.writeSimpleStringResp(conn, "PONG"); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
@@ -56,6 +57,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				}
 				continue
 			}
+			log.Printf("Response echo command: %s\n", cmdAndArgs.Args[1])
 			if err := h.writeBytesResp(conn, cmdAndArgs.Args[1]); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
@@ -65,6 +67,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 					Value:    cmdAndArgs.Args[2],
 					ExpireAt: math.MaxInt64,
 				}
+				log.Printf("Response set command: OK\n")
 				if err := h.writeSimpleStringResp(conn, "OK"); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
@@ -75,6 +78,7 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 							Value:    cmdAndArgs.Args[2],
 							ExpireAt: time.Now().UnixMilli() + expireAfter,
 						}
+						log.Printf("Response set command: OK\n")
 						if err := h.writeSimpleStringResp(conn, "OK"); err != nil {
 							return fmt.Errorf("error writing response: %v", err)
 						}
@@ -104,17 +108,31 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				continue
 			}
 			if val, ok := h.Storage.Mem[string(cmdAndArgs.Args[1])]; ok && val.ExpireAt > time.Now().UnixMilli() {
+				log.Printf("Response get command: %s\n", val.Value)
 				if err := h.writeBytesResp(conn, val.Value); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 			} else {
+				log.Printf("Response get command, evict key: %s\n", cmdAndArgs.Args[1])
 				delete(h.Storage.Mem, string(cmdAndArgs.Args[1]))
 				if err := h.writeNilResp(conn); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
 			}
-		case "info replication":
-			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v", h.Conf.Role))); err != nil {
+		case "info":
+			if len(cmdAndArgs.Args) != 2 {
+				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+				continue
+			} else if string(cmdAndArgs.Args[1]) != "replication" {
+				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+				continue
+			}
+			log.Printf("Response info command: role:%v\n", h.Conf.Role)
+			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v\r\n", h.Conf.Role))); err != nil {
 				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:
