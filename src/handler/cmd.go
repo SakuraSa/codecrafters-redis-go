@@ -20,6 +20,7 @@ var (
 )
 
 type CommandHandler struct {
+	Conf    model.CommandConf
 	Storage model.RedisStorage
 }
 
@@ -94,7 +95,6 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				}
 				continue
 			}
-
 		case "get":
 			if len(cmdAndArgs.Args) != 2 {
 				if err := h.writeErrorResp(conn, fmt.Sprintf("get requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
@@ -111,6 +111,21 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				if err := h.writeNilResp(conn); err != nil {
 					return fmt.Errorf("error writing response: %v", err)
 				}
+			}
+		case "info":
+			if len(cmdAndArgs.Args) != 2 {
+				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+				continue
+			} else if string(cmdAndArgs.Args[1]) != "replication" {
+				if err := h.writeErrorResp(conn, fmt.Sprintf("info requires 2 argument, %v\r\n", cmdAndArgs)); err != nil {
+					return fmt.Errorf("error writing response: %v", err)
+				}
+				continue
+			}
+			if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("role:%v\r\n", h.Conf.Role))); err != nil {
+				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:
 			if _, err := conn.Write([]byte(fmt.Sprintf("-ERR unknown command, %v\r\n", cmdAndArgs))); err != nil {
