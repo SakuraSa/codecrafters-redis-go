@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	// Define flags for address and port
 	var (
 		addressFlag = flag.String("address", "0.0.0.0", "address to bind to")
 		portFlag    = flag.Int("port", 6379, "port to bind to")
