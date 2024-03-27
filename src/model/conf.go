@@ -25,7 +25,7 @@ type pairType struct {
 	value interface{}
 }
 
-func (c CommandConf) Visit(f func(name string, value interface{}) error) error {
+func (c CommandConf) Visit(f func(name string, value interface{})) {
 	var pairs []*pairType
 
 	pairs = append(pairs, &pairType{"role", c.Role})
@@ -37,13 +37,7 @@ func (c CommandConf) Visit(f func(name string, value interface{}) error) error {
 		return pairs[i].name < pairs[j].name
 	})
 
-	var err error
 	for _, p := range pairs {
-		if err = f(p.name, p.value); err != nil {
-			break
-		}
-
+		f(p.name, p.value)
 	}
-
-	return err
 }

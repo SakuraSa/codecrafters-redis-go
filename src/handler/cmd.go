@@ -131,14 +131,13 @@ func (h *CommandHandler) HandleConnection(conn net.Conn) error {
 				}
 				continue
 			}
-			log.Printf("Response info command: role:%v\n", h.Conf.Role)
-			if err := h.Conf.Visit(func(name string, value interface{}) error {
-				if err := h.writeBytesResp(conn, []byte(fmt.Sprintf("%s:%v\r\n", name, value))); err != nil {
-					return fmt.Errorf("error writing response: %v", err)
-				}
-				return nil
-			}); err != nil {
-				return err
+			log.Printf("Response info command: %v\n", h.Conf)
+			builder := strings.Builder{}
+			h.Conf.Visit(func(name string, value interface{}) {
+				builder.WriteString(fmt.Sprintf("%s:%v\r\n", name, value))
+			})
+			if err := h.writeBytesResp(conn, []byte(builder.String())); err != nil {
+				return fmt.Errorf("error writing response: %v", err)
 			}
 		default:
 			log.Printf("Error: unknown command, %v\n", cmdAndArgs)
