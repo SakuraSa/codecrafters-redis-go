@@ -35,6 +35,8 @@ func main() {
 		redisHandler.Conf.Role = "slave"
 	} else {
 		redisHandler.Conf.Role = "master"
+		redisHandler.Conf.MasterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+		redisHandler.Conf.MasterReplOffset = 0
 	}
 	log.Printf("Redis conf: %v\n", &redisHandler.Conf)
 	server.SetHandler(redisHandler)
