@@ -41,6 +41,10 @@ func main() {
 	log.Printf("Redis conf: %v\n", &redisHandler.Conf)
 	server.SetHandler(redisHandler)
 
+	if redisHandler.Conf.Role == "slave" {
+		go redisHandler.Replicate(ctx)
+	}
+
 	if err := server.Loop(ctx); err != nil {
 		panic(fmt.Errorf("failed to start server: %v", err))
 	}

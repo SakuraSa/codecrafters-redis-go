@@ -82,6 +82,11 @@ func writeBytes(writer io.Writer, buf []byte) error {
 	} else if n != len(buf) {
 		return io.ErrShortWrite
 	}
+	if n, err := writer.Write([]byte(Endline)); err != nil {
+		return err
+	} else if n != len(Endline) {
+		return io.ErrShortWrite
+	}
 	return nil
 }
 
