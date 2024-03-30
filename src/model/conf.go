@@ -2,7 +2,9 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
+	"strings"
 )
 
 type CommandConf struct {
@@ -18,6 +20,13 @@ type CommandConf struct {
 func (c CommandConf) String() string {
 	buf, _ := json.Marshal(&c)
 	return string(buf)
+}
+
+func (c CommandConf) ReplicaofAddressAndPort() string {
+	if strings.Contains(c.ReplicaofAddress, ":") {
+		return fmt.Sprintf("[%s]:%d", c.ReplicaofAddress, c.ReplicaofPort)
+	}
+	return fmt.Sprintf("%s:%d", c.ReplicaofAddress, c.ReplicaofPort)
 }
 
 type pairType struct {

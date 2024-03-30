@@ -19,11 +19,11 @@ var (
 	_ RedisObject = &Map{}
 	_ RedisObject = &Set{}
 
-	keyLeadins []byte
+	StringLeadings []byte
 )
 
 func init() {
-	keyLeadins = []byte{
+	StringLeadings = []byte{
 		(&SimpleString{}).Leading(),
 		(&BulkString{}).Leading(),
 	}
@@ -177,7 +177,7 @@ func (m *Map) Read(reader concept.Reader) error {
 	m.elements = make(map[string]RedisObject, count)
 	for i := 0; i < count; i++ {
 		var key string
-		keyObj, err := ReadObject(reader, keyLeadins...)
+		keyObj, err := ReadObject(reader, StringLeadings...)
 		if err != nil {
 			return err
 		}

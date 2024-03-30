@@ -52,7 +52,7 @@ func (s *TCPServer) Loop(ctx context.Context) error {
 func (s *TCPServer) HandleConnection(ctx context.Context, conn net.Conn) {
 	if s.handler == nil {
 		return
-	} else if handlerErr := s.handler.HandleConnection(conn); handlerErr != nil {
+	} else if handlerErr := s.handler.HandleConnection(ctx, conn); handlerErr != nil {
 		log.Printf("Error handling connection: %v\n", handlerErr)
 	}
 }

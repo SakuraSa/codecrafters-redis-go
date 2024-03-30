@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 
+	"github.com/codecrafters-io/redis-starter-go/src/concept"
 	"github.com/codecrafters-io/redis-starter-go/src/model"
 	"github.com/codecrafters-io/redis-starter-go/src/model/redis"
 )
@@ -18,10 +20,15 @@ func init() {
 }
 
 var (
+	pingReq = redis.NewSimpleString("PING")
 	pingRsp = redis.NewSimpleString("PONG")
 )
 
 type Ping struct {
+}
+
+func NewPing() *Ping {
+	return &Ping{}
 }
 
 func (*Ping) Name() string {
@@ -43,4 +50,26 @@ func (*Ping) Read(args redis.Array) error {
 		}
 	}
 	return nil
+}
+
+func (*Ping) Send(writer io.Writer, reader concept.Reader) (rsp redis.RedisObject, err error) {
+	if err = pingReq.Write(writer); err != nil {
+		return
+	}
+	if rsp, err = redis.ReadObject(reader, redis.StringLeadings...); err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+	var rspMsg string
+	switch rsp := rsp.(type) {
+	case concept.AsString:
+		rspMsg = rsp.AsString()
+	default:
+		return nil, fmt.Errorf("unexpected response type: %v", rsp)
+	}
+
+	if rspMsg != "PONG" {
+		return nil, fmt.Errorf("unexpected response: %s", rspMsg)
+	}
+
+	return
 }

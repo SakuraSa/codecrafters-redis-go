@@ -1,7 +1,10 @@
 package handler
 
-import "net"
+import (
+	"context"
+	"net"
+)
 
 type ConnectionHandler interface {
-	HandleConnection(conn net.Conn) error
+	HandleConnection(ctx context.Context, conn net.Conn) error
 }
