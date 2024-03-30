@@ -5,6 +5,8 @@ import (
 	"hash"
 	"io"
 	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/src/concept"
 )
 
 const (
@@ -43,6 +45,18 @@ type Array struct {
 	elements []RedisObject
 }
 
+func (a *Array) Len() int {
+	return len(a.elements)
+}
+
+func (a *Array) Get(index int) RedisObject {
+	return a.elements[index]
+}
+
+func (a *Array) Set(value RedisObject, index int) {
+	a.elements[index] = value
+}
+
 func (a *Array) Leading() byte {
 	return '*'
 }
@@ -54,7 +68,7 @@ func (a *Array) Hash(h hash.Hash) {
 	}
 }
 
-func (a *Array) Read(reader Reader) error {
+func (a *Array) Read(reader concept.Reader) error {
 	if err := readExpected(reader, []byte{a.Leading()}); err != nil {
 		return err
 	}
@@ -110,6 +124,19 @@ type Map struct {
 	elements map[string]RedisObject
 }
 
+func (m *Map) Len() int {
+	return len(m.elements)
+}
+
+func (m *Map) Get(key string) (RedisObject, bool) {
+	value, found := m.elements[key]
+	return value, found
+}
+
+func (m *Map) Set(key string, value RedisObject) {
+	m.elements[key] = value
+}
+
 func (m *Map) Leading() byte {
 	return '%'
 }
@@ -137,7 +164,7 @@ func (m *Map) Hash(h hash.Hash) {
 	}
 }
 
-func (m *Map) Read(reader Reader) error {
+func (m *Map) Read(reader concept.Reader) error {
 	if err := readExpected(reader, []byte{m.Leading()}); err != nil {
 		return err
 	}
@@ -230,7 +257,7 @@ func (s *Set) Hash(h hash.Hash) {
 	}
 }
 
-func (s *Set) Read(reader Reader) error {
+func (s *Set) Read(reader concept.Reader) error {
 	if err := readExpected(reader, []byte{s.Leading()}); err != nil {
 		return err
 	}

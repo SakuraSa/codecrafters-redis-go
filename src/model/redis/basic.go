@@ -6,6 +6,8 @@ import (
 	"hash"
 	"io"
 	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/src/concept"
 )
 
 const (
@@ -54,8 +56,16 @@ type SimpleString struct {
 	value string
 }
 
+func NewSimpleString(value string) *SimpleString {
+	return &SimpleString{value: value}
+}
+
 func (*SimpleString) Leading() byte {
 	return '+'
+}
+
+func (s *SimpleString) AsString() string {
+	return s.value
 }
 
 func (s *SimpleString) Hash(h hash.Hash) {
@@ -63,7 +73,7 @@ func (s *SimpleString) Hash(h hash.Hash) {
 	h.Write([]byte(s.value))
 }
 
-func (s *SimpleString) Read(reader Reader) (err error) {
+func (s *SimpleString) Read(reader concept.Reader) (err error) {
 	if err = readExpected(reader, []byte{s.Leading()}); err == nil {
 		s.value, err = readSimpleString(reader)
 	}
@@ -85,6 +95,10 @@ type SimpleError struct {
 	value string
 }
 
+func NewSimpleError(value string) *SimpleError {
+	return &SimpleError{value: value}
+}
+
 func (s *SimpleError) Leading() byte {
 	return '-'
 }
@@ -94,7 +108,7 @@ func (s *SimpleError) Hash(h hash.Hash) {
 	h.Write([]byte(s.value))
 }
 
-func (s *SimpleError) Read(reader Reader) (err error) {
+func (s *SimpleError) Read(reader concept.Reader) (err error) {
 	if err = readExpected(reader, []byte{s.Leading()}); err == nil {
 		s.value, err = readSimpleString(reader)
 	}
@@ -116,6 +130,14 @@ type Integer struct {
 	value int64
 }
 
+func NewInteger(value int64) *Integer {
+	return &Integer{value: value}
+}
+
+func (i *Integer) AsInt64() int64 {
+	return i.value
+}
+
 func (i *Integer) Leading() byte {
 	return ':'
 }
@@ -125,7 +147,7 @@ func (i *Integer) Hash(h hash.Hash) {
 	binary.Write(h, ByteOrder, i.value)
 }
 
-func (i *Integer) Read(reader Reader) (err error) {
+func (i *Integer) Read(reader concept.Reader) (err error) {
 	if err = readExpected(reader, []byte{i.Leading()}); err == nil {
 		i.value, err = readInt64(reader)
 	}
@@ -147,6 +169,18 @@ type BulkString struct {
 	value []byte
 }
 
+func NewBulkString(value []byte) *BulkString {
+	return &BulkString{value: value}
+}
+
+func (b *BulkString) AsString() string {
+	return string(b.value)
+}
+
+func (b *BulkString) AsBytes() []byte {
+	return b.value
+}
+
 func (b *BulkString) IsNull() bool {
 	return b.value == nil
 }
@@ -164,7 +198,7 @@ func (b *BulkString) Leading() byte {
 	return '$'
 }
 
-func (b *BulkString) Read(reader Reader) (err error) {
+func (b *BulkString) Read(reader concept.Reader) (err error) {
 	if err = readExpected(reader, []byte{b.Leading()}); err == nil {
 		b.value, err = readBulkString(reader)
 	}
@@ -193,6 +227,10 @@ type BulkError struct {
 	value []byte
 }
 
+func NewBulkError(value []byte) *BulkError {
+	return &BulkError{value: value}
+}
+
 func (e *BulkError) Hash(h hash.Hash) {
 	h.Write([]byte{e.Leading()})
 	h.Write(e.value)
@@ -206,7 +244,7 @@ func (e *BulkError) Leading() byte {
 	return '!'
 }
 
-func (e *BulkError) Read(reader Reader) (err error) {
+func (e *BulkError) Read(reader concept.Reader) (err error) {
 	if err = readExpected(reader, []byte{e.Leading()}); err == nil {
 		e.value, err = readBulkString(reader)
 	}
@@ -229,9 +267,14 @@ func (e *BulkError) Write(writer io.Writer) error {
 
 var (
 	nullBuf = []byte{(&Null{}).Leading(), Endline[0], Endline[1]}
+	Nil     = NewNull()
 )
 
 type Null struct {
+}
+
+func NewNull() *Null {
+	return &Null{}
 }
 
 func (*Null) Leading() byte {
@@ -242,7 +285,7 @@ func (n *Null) Hash(h hash.Hash) {
 	h.Write([]byte{n.Leading()})
 }
 
-func (n *Null) Read(reader Reader) error {
+func (n *Null) Read(reader concept.Reader) error {
 	return readExpected(reader, nullBuf)
 }
 
@@ -258,6 +301,15 @@ type Boolean struct {
 	value bool
 }
 
+var (
+	True  = NewBoolean(true)
+	False = NewBoolean(false)
+)
+
+func NewBoolean(value bool) *Boolean {
+	return &Boolean{value: value}
+}
+
 func (b *Boolean) Leading() byte {
 	return '#'
 }
@@ -267,7 +319,7 @@ func (b *Boolean) Hash(h hash.Hash) {
 	binary.Write(h, ByteOrder, b.value)
 }
 
-func (b *Boolean) Read(reader Reader) error {
+func (b *Boolean) Read(reader concept.Reader) error {
 	if err := readExpected(reader, []byte{b.Leading()}); err != nil {
 		return err
 	}
@@ -306,6 +358,10 @@ type Double struct {
 	value float64
 }
 
+func NewDouble(value float64) *Double {
+	return &Double{value: value}
+}
+
 func (d *Double) Leading() byte {
 	return ','
 }
@@ -315,7 +371,7 @@ func (d *Double) Hash(h hash.Hash) {
 	binary.Write(h, ByteOrder, d.value)
 }
 
-func (d *Double) Read(reader Reader) error {
+func (d *Double) Read(reader concept.Reader) error {
 	if err := readExpected(reader, []byte{d.Leading()}); err != nil {
 		return err
 	}

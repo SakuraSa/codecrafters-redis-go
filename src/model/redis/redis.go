@@ -1,16 +1,13 @@
 package redis
 
 import (
-	"bufio"
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
 	"hash"
 	"io"
-)
 
-var (
-	_ Reader = &bufio.Reader{}
+	"github.com/codecrafters-io/redis-starter-go/src/concept"
 )
 
 var (
@@ -18,19 +15,9 @@ var (
 	HashFunc  func() hash.Hash = md5.New
 )
 
-type Reader interface {
-	Peek(n int) ([]byte, error)
-	Discard(n int) (discarded int, err error)
-	Read(p []byte) (n int, err error)
-	ReadByte() (byte, error)
-	UnreadByte() error
-	ReadBytes(delim byte) ([]byte, error)
-	ReadLine() (line []byte, isPrefix bool, err error)
-}
-
 type RedisObject interface {
 	String() string
-	Read(reader Reader) error
+	Read(reader concept.Reader) error
 	Write(writer io.Writer) error
 	Leading() byte
 	Hash(hash.Hash)
@@ -56,7 +43,7 @@ func visitAllTypeBuilder(f func(func() RedisObject)) {
 	visitAllAggTypeBuilder(f)
 }
 
-func ReadObject(reader Reader, expectedLead ...byte) (RedisObject, error) {
+func ReadObject(reader concept.Reader, expectedLead ...byte) (RedisObject, error) {
 	leading, err := reader.Peek(1)
 	if err != nil {
 		return nil, err

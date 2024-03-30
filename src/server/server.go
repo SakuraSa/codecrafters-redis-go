@@ -50,13 +50,6 @@ func (s *TCPServer) Loop(ctx context.Context) error {
 }
 
 func (s *TCPServer) HandleConnection(ctx context.Context, conn net.Conn) {
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		log.Println("Recovered from panic: ", err)
-	// 	}
-	// 	_ = conn.Close()
-	// }()
-
 	if s.handler == nil {
 		return
 	} else if handlerErr := s.handler.HandleConnection(conn); handlerErr != nil {

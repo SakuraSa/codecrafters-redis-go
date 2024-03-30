@@ -3,9 +3,11 @@ package redis
 import (
 	"io"
 	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/src/concept"
 )
 
-func readExpected(reader Reader, expected []byte) error {
+func readExpected(reader concept.Reader, expected []byte) error {
 	buf := make([]byte, len(expected))
 	if n, err := reader.Read(buf); err != nil {
 		return err
@@ -23,7 +25,7 @@ func readExpected(reader Reader, expected []byte) error {
 	return nil
 }
 
-func readSimpleString(reader Reader) (string, error) {
+func readSimpleString(reader concept.Reader) (string, error) {
 	line, isPrefix, err := reader.ReadLine()
 	if err != nil {
 		return "", err
@@ -38,7 +40,7 @@ func readSimpleString(reader Reader) (string, error) {
 	return string(line), nil
 }
 
-func readBulkString(reader Reader) ([]byte, error) {
+func readBulkString(reader concept.Reader) ([]byte, error) {
 	size, err := readSize(reader)
 	if err != nil {
 		return nil, err
@@ -83,12 +85,12 @@ func writeBytes(writer io.Writer, buf []byte) error {
 	return nil
 }
 
-func readSize(reader Reader) (int, error) {
+func readSize(reader concept.Reader) (int, error) {
 	i, err := readInt64(reader)
 	return int(i), err
 }
 
-func readInt64(reader Reader) (int64, error) {
+func readInt64(reader concept.Reader) (int64, error) {
 	sizeLine, isPrefix, err := reader.ReadLine()
 	if err != nil {
 		return 0, err
