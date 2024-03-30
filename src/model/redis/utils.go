@@ -33,9 +33,6 @@ func readSimpleString(reader concept.Reader) (string, error) {
 	if isPrefix {
 		return "", io.ErrShortBuffer
 	}
-	if len(line) == 0 {
-		return "", io.ErrUnexpectedEOF
-	}
 
 	return string(line), nil
 }
@@ -115,21 +112,8 @@ func writeSize(writer io.Writer, size int) error {
 }
 
 func writeInt64(writer io.Writer, value int64) error {
-	if err := writeBuf(writer, strconv.AppendInt(nil, value, 10)); err != nil {
+	if err := writeBytes(writer, strconv.AppendInt(nil, value, 10)); err != nil {
 		return err
-	}
-	if err := writeBuf(writer, []byte(Endline)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func writeBuf(writer io.Writer, buf []byte) error {
-	if n, err := writer.Write(buf); err != nil {
-		return err
-	} else if n != len(buf) {
-		return io.ErrShortWrite
 	}
 
 	return nil

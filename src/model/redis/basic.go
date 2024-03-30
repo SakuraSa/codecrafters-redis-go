@@ -207,16 +207,16 @@ func (b *BulkString) Read(reader concept.Reader) (err error) {
 
 func (b *BulkString) Write(writer io.Writer) error {
 	if b.IsNull() {
-		return writeBuf(writer, []byte("$-1\r\n"))
+		return writeBytes(writer, []byte("$-1"))
 	}
 
-	if err := writeBuf(writer, []byte{b.Leading()}); err != nil {
+	if err := writeByte(writer, b.Leading()); err != nil {
 		return err
 	}
 	if err := writeSize(writer, len(b.value)); err != nil {
 		return err
 	}
-	if err := writeBuf(writer, b.value); err != nil {
+	if err := writeBytes(writer, b.value); err != nil {
 		return err
 	}
 
@@ -252,13 +252,13 @@ func (e *BulkError) Read(reader concept.Reader) (err error) {
 }
 
 func (e *BulkError) Write(writer io.Writer) error {
-	if err := writeBuf(writer, []byte{e.Leading()}); err != nil {
+	if err := writeByte(writer, e.Leading()); err != nil {
 		return err
 	}
 	if err := writeSize(writer, len(e.value)); err != nil {
 		return err
 	}
-	if err := writeBuf(writer, e.value); err != nil {
+	if err := writeBytes(writer, e.value); err != nil {
 		return err
 	}
 
@@ -266,7 +266,7 @@ func (e *BulkError) Write(writer io.Writer) error {
 }
 
 var (
-	nullBuf = []byte{(&Null{}).Leading(), Endline[0], Endline[1]}
+	nullBuf = []byte{(&Null{}).Leading()}
 	Nil     = NewNull()
 )
 
@@ -286,7 +286,10 @@ func (n *Null) Hash(h hash.Hash) {
 }
 
 func (n *Null) Read(reader concept.Reader) error {
-	return readExpected(reader, nullBuf)
+	if err := readExpected(reader, nullBuf); err != nil {
+		return err
+	}
+	return readExpected(reader, []byte(Endline))
 }
 
 func (n *Null) String() string {
@@ -294,7 +297,7 @@ func (n *Null) String() string {
 }
 
 func (n *Null) Write(writer io.Writer) error {
-	return writeBuf(writer, nullBuf)
+	return writeBytes(writer, nullBuf)
 }
 
 type Boolean struct {
@@ -348,9 +351,9 @@ func (b *Boolean) String() string {
 
 func (b *Boolean) Write(writer io.Writer) error {
 	if b.value {
-		return writeBuf(writer, []byte("#t\r\n"))
+		return writeBytes(writer, []byte("#t"))
 	} else {
-		return writeBuf(writer, []byte("#f\r\n"))
+		return writeBytes(writer, []byte("#f"))
 	}
 }
 
