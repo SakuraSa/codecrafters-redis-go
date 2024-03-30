@@ -43,8 +43,8 @@ func (*Ping) Execute(writer io.Writer, storage *model.RedisStorage, conf *model.
 	return pingRsp, pingRsp.Write(writer)
 }
 
-func (*Ping) Read(args redis.Array) error {
-	if args.Len() != 1 {
+func (*Ping) Read(args *redis.Array) error {
+	if args == nil || args.Len() != 1 {
 		return &redis.SyntaxError{
 			Msg: "wrong number of arguments",
 		}

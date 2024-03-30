@@ -12,6 +12,8 @@ import (
 
 var (
 	_ Command = &Get{}
+
+	nilString = redis.NewBulkString(nil)
 )
 
 func init() {
@@ -35,17 +37,17 @@ func (g *Get) String() string {
 func (g *Get) Execute(writer io.Writer, storage *model.RedisStorage, conf *model.CommandConf) (redis.RedisObject, error) {
 	value, found := storage.Mem[g.key]
 	if !found {
-		return redis.NewBulkString(nil), nil
-	} else if value.ExpireAt > time.Now().UnixMilli() {
+		return nilString, nilString.Write(writer)
+	} else if value.ExpireAt < time.Now().UnixMilli() {
 		delete(storage.Mem, g.key)
-		return redis.NewBulkString(nil), nil
+		return nilString, nilString.Write(writer)
 	}
 	rsp := redis.NewBulkString(value.Value)
 	return rsp, rsp.Write(writer)
 }
 
-func (g *Get) Read(args redis.Array) error {
-	if args.Len() != 2 {
+func (g *Get) Read(args *redis.Array) error {
+	if args == nil || args.Len() != 2 {
 		return &redis.SyntaxError{
 			Msg: "wrong number of arguments",
 		}

@@ -35,8 +35,8 @@ func (i *Info) Execute(writer io.Writer, storage *model.RedisStorage, conf *mode
 	return i.subCommand.Execute(writer, storage, conf)
 }
 
-func (i *Info) Read(args redis.Array) error {
-	if args.Len() != 2 {
+func (i *Info) Read(args *redis.Array) error {
+	if args == nil || args.Len() != 2 {
 		return &redis.SyntaxError{
 			Msg: "wrong number of arguments",
 		}
@@ -91,6 +91,6 @@ func (i *InfoReplication) Execute(writer io.Writer, _ *model.RedisStorage, conf 
 	return rsp, rsp.Write(writer)
 }
 
-func (i *InfoReplication) Read(args redis.Array) error {
+func (i *InfoReplication) Read(args *redis.Array) error {
 	return nil
 }

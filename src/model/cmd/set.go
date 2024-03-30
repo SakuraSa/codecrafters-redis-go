@@ -52,21 +52,26 @@ func (s *Set) Execute(writer io.Writer, storage *model.RedisStorage, conf *model
 	return rsp, rsp.Write(writer)
 }
 
-func (s *Set) Read(args redis.Array) error {
-	if args.Len() == 3 {
+func (s *Set) Read(args *redis.Array) error {
+	argSize := args.Len()
+	switch {
+	case argSize <= 2 || argSize == 4 || argSize > 5:
+		return &redis.SyntaxError{
+			Msg: "wrong number of arguments",
+		}
+	case argSize == 3:
 		if err := s.readKey(args.Get(1)); err != nil {
 			return err
 		} else if err = s.readValue(args.Get(2)); err != nil {
 			return err
 		}
 		s.expireAt = math.MaxInt64
-	}
-	if args.Len() == 4 {
-		return &redis.SyntaxError{
-			Msg: "wrong number of arguments",
+	case argSize == 5:
+		if err := s.readKey(args.Get(1)); err != nil {
+			return err
+		} else if err = s.readValue(args.Get(2)); err != nil {
+			return err
 		}
-	}
-	if args.Len() == 5 {
 		opt := ""
 		switch px := args.Get(3).(type) {
 		case concept.AsString:

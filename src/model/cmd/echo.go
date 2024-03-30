@@ -36,8 +36,8 @@ func (e *Echo) Execute(writer io.Writer, storage *model.RedisStorage, conf *mode
 	return rsp, rsp.Write(writer)
 }
 
-func (e *Echo) Read(args redis.Array) error {
-	if args.Len() != 2 {
+func (e *Echo) Read(args *redis.Array) error {
+	if args == nil || args.Len() != 2 {
 		return &redis.SyntaxError{
 			Msg: "wrong number of arguments",
 		}

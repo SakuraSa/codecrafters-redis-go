@@ -13,7 +13,7 @@ import (
 type Command interface {
 	Name() string
 	String() string
-	Read(args redis.Array) error
+	Read(args *redis.Array) error
 	Execute(writer io.Writer, storage *model.RedisStorage, conf *model.CommandConf) (redis.RedisObject, error)
 }
 
@@ -55,7 +55,7 @@ func ReadCommand(reader concept.Reader, storage *model.RedisStorage, conf *model
 	}
 
 	command := builder()
-	if err := command.Read(args); err != nil {
+	if err := command.Read(&args); err != nil {
 		return nil, fmt.Errorf("failed to read command %v: %w", &args, err)
 	}
 

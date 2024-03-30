@@ -10,8 +10,11 @@ import (
 )
 
 const (
-	ElemSep = ", "
-	PairSep = ": "
+	ElemSep      = ", "
+	PairSep      = ": "
+	ArrayLeading = '*'
+	MapLeading   = '%'
+	SetLeading   = '~'
 )
 
 var (
@@ -58,7 +61,7 @@ func (a *Array) Set(value RedisObject, index int) {
 }
 
 func (a *Array) Leading() byte {
-	return '*'
+	return ArrayLeading
 }
 
 func (a *Array) Hash(h hash.Hash) {
@@ -138,7 +141,7 @@ func (m *Map) Set(key string, value RedisObject) {
 }
 
 func (m *Map) Leading() byte {
-	return '%'
+	return MapLeading
 }
 
 func (m *Map) String() string {
@@ -231,7 +234,7 @@ type Set struct {
 }
 
 func (s *Set) Leading() byte {
-	return '~'
+	return SetLeading
 }
 
 func (s *Set) String() string {
