@@ -48,6 +48,13 @@ type Array struct {
 	elements []RedisObject
 }
 
+func NewArray(elements ...RedisObject) *Array {
+	return &Array{
+		elements: elements,
+	}
+
+}
+
 func (a *Array) Len() int {
 	return len(a.elements)
 }

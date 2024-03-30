@@ -20,7 +20,7 @@ func init() {
 }
 
 var (
-	pingReq = redis.NewSimpleString("PING")
+	pingReq = redis.NewArray(redis.NewSimpleString("PING"))
 	pingRsp = redis.NewSimpleString("PONG")
 )
 

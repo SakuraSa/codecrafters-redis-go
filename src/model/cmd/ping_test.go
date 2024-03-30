@@ -77,3 +77,37 @@ func TestPing_Execute(t *testing.T) {
 		})
 	}
 }
+
+func TestPing_Send(t *testing.T) {
+	tests := []struct {
+		name    string
+		command *Ping
+		input   string
+		output  string
+		isError bool
+	}{
+		{
+			name:    "normal",
+			command: &Ping{},
+			input:   "+PONG\r\n",
+			output:  "*1\r\n+PING\r\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			writer := &strings.Builder{}
+			reader := bufio.NewReader(bytes.NewBufferString(tt.input))
+			if _, err := tt.command.Send(writer, reader); err != nil {
+				if tt.isError {
+					return
+				}
+				t.Errorf("case %s: failed to send command: %v", tt.name, err)
+			} else if tt.isError {
+				t.Errorf("case %s: expected error but got nil", tt.name)
+			} else if actual := writer.String(); actual != tt.output {
+				t.Errorf("case %s: expected %s but got %s", tt.name, tt.output, actual)
+			}
+		})
+	}
+}
